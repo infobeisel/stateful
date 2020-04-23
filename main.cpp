@@ -21,13 +21,14 @@ private:
 class Verbose : public State<StatefulMethods,User> {
 public:
     Verbose(User & backRef) :
-    State(backRef) {}
+    State(backRef) {std::cout << "construct Verbose" << std::endl;}
+    ~Verbose() {std::cout << "destruct Verbose" << std::endl;}
      void saySth() override {
         std::cout << "very much blah" << std::endl;
     }
 protected:
     STATEPTR(StatefulMethods,User) nextState() override {
-        return back_ref.state;
+        RETURNSELF
     }
     void entry() override {
         std::cout << "init Verbose" << std::endl;
@@ -42,17 +43,18 @@ protected:
 class Idle : public State<StatefulMethods,User> {
 public:
     Idle(User & backRef) :
-    State(backRef) , saidCoucou(false) {}
+    State(backRef) , saidCoucou(false) {std::cout << "construct Idle" << std::endl;}
+    ~Idle() {std::cout << "construct Idle" << std::endl;}
     void saySth() override {
         std::cout << "cou couu" << std::endl;
         saidCoucou = true;
     }
 protected:
     STATEPTR(StatefulMethods,User) nextState() override {
-        if(saidCoucou)
-            return std::make_shared<Verbose>(back_ref);
-        else
-            return back_ref.state;
+        if(saidCoucou) {
+            return std::make_unique<Verbose>(back_ref);
+        }
+        RETURNSELF
     }   
     void entry() override {
         std::cout << "init Idle" << std::endl;
@@ -66,7 +68,7 @@ private:
     bool saidCoucou;
 };
 
-User::User() : Stateful(std::make_shared<Idle>(*this)) {}
+User::User() : Stateful(std::make_unique<Idle>(*this)) {}
 
 void User::saySth() {
     state->saySth();
