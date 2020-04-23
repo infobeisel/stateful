@@ -20,7 +20,7 @@ private:
 
 class Verbose : public State<StatefulMethods,User> {
 public:
-    Verbose(Stateful<StatefulMethods,User> & backRef) :
+    Verbose(User & backRef) :
     State(backRef) {}
      void saySth() override {
         std::cout << "very much blah" << std::endl;
@@ -31,17 +31,17 @@ protected:
     }
     void entry() override {
         std::cout << "init Verbose" << std::endl;
-        back_ref.data.someData++;
+        back_ref.someData++;
     }
     void exit() override {
-        std::cout << "cleanup Verbose" << std::to_string(back_ref.data.someData) << std::endl;
+        std::cout << "cleanup Verbose" << std::to_string(back_ref.someData) << std::endl;
         
     }
 };
 
 class Idle : public State<StatefulMethods,User> {
 public:
-    Idle(Stateful<StatefulMethods,User> & backRef) :
+    Idle(User & backRef) :
     State(backRef) , saidCoucou(false) {}
     void saySth() override {
         std::cout << "cou couu" << std::endl;
@@ -56,17 +56,17 @@ protected:
     }   
     void entry() override {
         std::cout << "init Idle" << std::endl;
-        back_ref.data.someData = 1;
+        back_ref.someData = 1;
     }
     void exit() override {
         std::cout << "cleanup Idle" << std::endl;
-        back_ref.data.someData++;
+        back_ref.someData++;
     }
 private:
     bool saidCoucou;
 };
 
-User::User() : Stateful(std::make_shared<Idle>(*this), *this) {}
+User::User() : Stateful(std::make_shared<Idle>(*this)) {}
 
 void User::saySth() {
     state->saySth();

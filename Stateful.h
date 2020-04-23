@@ -14,18 +14,18 @@ public:
 2. then create your first state S your stateful class X should start in, make it inherit from
 State<Y,X>, and make sure to call its constructor. in your state you can always access
 your main class object X by 
-back_ref.data 
-you could declare your State classes as friendship classes in your main class X to be able
+back_ref.
+tip: declare your State classes as friendship classes in your main class X to be able
 to access private members of your main class
 
 class S : public State<Y,X> {
-    S(Stateful<Y,X> & ref) : State(ref) {...}
+    S(X & ref) : State(ref) {...}
 };
 
 3. Finally inherit your class X from Stateful<Y,X> , and make sure that you call its constructor,
-and give it an instance of your start State S, as well as references to this:  
+and give it an instance of your start State S:  
 class X : public Stateful<Y,X> {
-    X() :  Stateful(std::make_shared<Idle>(*this), *this) 
+    X() :  Stateful(std::make_shared<Idle>(*this)) 
 };
 
 4. now you can call methods from Y on the inherited member state 
@@ -33,11 +33,12 @@ in any method in your class X (dont forget to call updateState() afterwards), e.
 
 void X::foo() {
     state.mymethod();
+    updateState(); //this calls nextState() on the current state, see 5.
 }
 
 5. to add more states P and Q , create classes similar to S (see 2.), then override the method
 nextState() in each of your states, where you can return another state, or yourself if you dont want
-to change the current state:
+to change the current state. nextState() will always get called when you call updateState() in your main class X
 
 STATEPTR(Y,X) nextState() override {
     if(...)
@@ -56,19 +57,19 @@ template<typename Methods, typename User>
 class State : public Methods {
     friend class Stateful<Methods,User>;
 protected:
-    Stateful<Methods,User> & back_ref;
+    User & back_ref;
     virtual std::shared_ptr<State<Methods,User>> nextState() { return back_ref.state;}
     virtual void entry() {}
     virtual void exit() {}
 public:
-    State(Stateful<Methods,User> & backRef) : back_ref(backRef) {}
+    State(User & backRef) : back_ref(backRef) {}
 };
 
 template<typename Methods,typename User>
 class Stateful {
     friend class State<Methods,User>;
 public: 
-    Stateful(std::shared_ptr<State<Methods,User>> startState, User & selfRef) : state(startState), data(selfRef) 
+    Stateful(std::shared_ptr<State<Methods,User>> startState) : state(startState)
     {
         state->entry();
     }
@@ -85,7 +86,6 @@ public:
         }
     }
     std::shared_ptr<State<Methods,User>> state;
-    User & data;
 };
 
 #define STATEPTR(T1,T2) std::shared_ptr<State<T1,T2>>
