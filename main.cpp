@@ -44,7 +44,7 @@ class Idle : public State<StatefulMethods,User> {
 public:
     Idle(User & backRef) :
     State(backRef) , saidCoucou(false) {std::cout << "construct Idle" << std::endl;}
-    ~Idle() {std::cout << "construct Idle" << std::endl;}
+    ~Idle() {std::cout << "destruct Idle" << std::endl;}
     void saySth() override {
         std::cout << "cou couu" << std::endl;
         saidCoucou = true;
@@ -52,7 +52,7 @@ public:
 protected:
     STATEPTR(StatefulMethods,User) nextState() override {
         if(saidCoucou) {
-            return std::make_unique<Verbose>(back_ref);
+            return new Verbose(back_ref);
         }
         RETURNSELF
     }   
@@ -68,7 +68,7 @@ private:
     bool saidCoucou;
 };
 
-User::User() : Stateful(std::make_unique<Idle>(*this)) {}
+User::User() : Stateful(new Idle(*this)) {}
 
 void User::saySth() {
     state->saySth();

@@ -1,4 +1,3 @@
-#include <memory>
 /*
 to make your class X stateful:
 
@@ -57,7 +56,7 @@ the next state's constructor gets called before the old state's destructor.
 template<typename Methods,typename User>
 class Stateful ;
 
-#define STATEPTR(T1,T2) std::unique_ptr<State<T1,T2>> 
+#define STATEPTR(T1,T2) State<T1,T2> * 
 #define RETURNSELF return nullptr;
 
 template<typename Methods, typename User>
@@ -70,32 +69,34 @@ protected:
     virtual void exit() {}
 public:
     State(User & backRef) : back_ref(backRef) {}
+    virtual ~State() {}
 };
 
 template<typename Methods,typename User>
 class Stateful {
     friend class State<Methods,User>;
 public: 
-    Stateful(std::unique_ptr<State<Methods,User>> startState) : state(std::move(startState))
+    Stateful(State<Methods,User> * startState) : state(startState)
     {
         state->entry();
     }
     ~Stateful()
     {
         state->exit();
+        delete state;
     }
     void updateState() {
         auto next = state->nextState();
         //right now, either next is a new object, empty
         if(next) { 
             state->exit();
-            state = nullptr;
-            state = std::move(next);
+            delete state;
+            state = next;
             state->entry();
 
         }
     }
-    std::unique_ptr<State<Methods,User>> state;
+    STATEPTR(Methods,User) state;
 };
 
 
